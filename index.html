@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orbital Launches</title>
+<meta name="theme-color" content="#0b1020">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="appbar">
+  <h1 id="title">🚀 Nächste Starts</h1>
+  <div class="menu-wrap">
+    <button id="menuBtn" class="icon-btn" aria-label="Menü" aria-haspopup="true">⋮</button>
+    <div id="menu" class="menu" hidden>
+      <div class="menu-label">Darstellung</div>
+      <button data-theme="light">☀️ Hell</button>
+      <button data-theme="dark">🌙 Dunkel</button>
+      <button data-theme="auto">🖥️ System</button>
+      <div class="menu-label">Zeit</div>
+      <button id="tzBtn">🕒 Zeitzone: <span id="tzLabel">Lokal</span></button>
+      <hr>
+      <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener">📖 Quelle (Wikipedia)</a>
+      <button id="aboutBtn">ℹ️ Über die App</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="view-list" class="view active">
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Suche: Rakete, Mission, Startplatz…">
+      <div id="chips" class="chips"></div>
+    </div>
+    <div id="countdown" class="hero"></div>
+    <div id="list"></div>
+  </section>
+
+  <section id="view-map" class="view">
+    <div id="map"></div>
+  </section>
+
+  <section id="view-sites" class="view">
+    <div class="toolbar"><input id="siteSearch" type="search" placeholder="Startplatz suchen…"></div>
+    <div id="sites"></div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button class="tab active" data-view="list"><span>📋</span>Starts</button>
+  <button class="tab" data-view="map"><span>🗺️</span>Karte</button>
+  <button class="tab" data-view="sites"><span>📍</span>Startplätze</button>
+</nav>
+
+<dialog id="about">
+  <h2>Orbital Launches</h2>
+  <p>Zeigt geplante orbitale Raketenstarts nach der <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener">Wikipedia-Liste</a>. Termine sind vorläufig und können sich jederzeit ändern.</p>
+  <p class="muted">Daten-Stand: <span id="updated"></span></p>
+  <form method="dialog"><button class="primary">Schließen</button></form>
+</dialog>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data/sites.js"></script>
+<script src="data/launches.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
