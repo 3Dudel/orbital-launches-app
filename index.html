@@ -7,24 +7,38 @@
 <meta name="theme-color" content="#0b1020">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.800 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="9.500" r="2.500" fill="currentColor"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.900 4.900l2.100 2.100M17 17l2.100 2.100M4.900 19.100L7 17M17 7l2.100-2.100" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.500A8 8 0 0 1 9.500 4 8 8 0 1 0 20 14.500z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4zM5 17a3 3 0 0 1 3-3h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.500v.01" stroke="currentColor" stroke-width="2.200" stroke-linecap="round"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.300-5.700M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
 <header class="appbar">
-  <h1 id="title">🚀 Nächste Starts</h1>
+  <h1 id="title">Nächste Starts</h1>
   <div class="menu-wrap">
-    <button id="menuBtn" class="icon-btn" aria-label="Menü" aria-haspopup="true">⋮</button>
+    <button id="menuBtn" class="icon-btn" aria-label="Menü" aria-haspopup="true"><svg class="ic"><use href="#i-dots"/></svg></button>
     <div id="menu" class="menu" hidden>
       <div class="menu-label">Darstellung</div>
-      <button data-theme="light">☀️ Hell</button>
-      <button data-theme="dark">🌙 Dunkel</button>
-      <button data-theme="auto">🖥️ System</button>
+      <button data-theme="light"><svg class="ic"><use href="#i-sun"/></svg>Hell</button>
+      <button data-theme="dark"><svg class="ic"><use href="#i-moon"/></svg>Dunkel</button>
+      <button data-theme="auto"><svg class="ic"><use href="#i-auto"/></svg>System</button>
       <div class="menu-label">Zeit</div>
-      <button id="tzBtn">🕒 Zeitzone: <span id="tzLabel">Lokal</span></button>
+      <button id="tzBtn"><svg class="ic"><use href="#i-clock"/></svg>Zeitzone: <span id="tzLabel">Lokal</span></button>
       <hr>
-      <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener">📖 Quelle (Wikipedia)</a>
-      <button id="aboutBtn">ℹ️ Über die App</button>
+      <button id="reloadBtn"><svg class="ic"><use href="#i-refresh"/></svg>Daten neu laden</button>
+      <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener"><svg class="ic"><use href="#i-book"/></svg>Quelle (Wikipedia)</a>
+      <button id="aboutBtn"><svg class="ic"><use href="#i-info"/></svg>Über die App</button>
     </div>
   </div>
 </header>
@@ -32,7 +46,7 @@
 <main>
   <section id="view-list" class="view active">
     <div class="toolbar">
-      <input id="search" type="search" placeholder="Suche: Rakete, Mission, Startplatz…">
+      <input id="search" type="search" placeholder="Suche: Rakete, Mission, Startplatz">
       <div id="chips" class="chips"></div>
     </div>
     <div id="countdown" class="hero"></div>
@@ -40,31 +54,34 @@
   </section>
 
   <section id="view-map" class="view">
-    <div id="map"></div>
+    <div class="mapwrap">
+      <div id="map"></div>
+      <div class="zoom"><button id="zin" aria-label="Vergrößern">+</button><button id="zout" aria-label="Verkleinern">−</button><button id="zreset" aria-label="Zurücksetzen">1:1</button></div>
+      <div id="mapinfo" class="mapinfo" hidden></div>
+    </div>
+    <div class="legend"><span class="dot hot"></span>Starts geplant<span class="dot"></span>Keine Starts</div>
   </section>
 
   <section id="view-sites" class="view">
-    <div class="toolbar"><input id="siteSearch" type="search" placeholder="Startplatz suchen…"></div>
+    <div class="toolbar"><input id="siteSearch" type="search" placeholder="Startplatz suchen"></div>
     <div id="sites"></div>
   </section>
 </main>
 
 <nav class="tabbar">
-  <button class="tab active" data-view="list"><span>📋</span>Starts</button>
-  <button class="tab" data-view="map"><span>🗺️</span>Karte</button>
-  <button class="tab" data-view="sites"><span>📍</span>Startplätze</button>
+  <button class="tab active" data-view="list"><svg class="ic"><use href="#i-list"/></svg>Starts</button>
+  <button class="tab" data-view="map"><svg class="ic"><use href="#i-map"/></svg>Karte</button>
+  <button class="tab" data-view="sites"><svg class="ic"><use href="#i-pin"/></svg>Startplätze</button>
 </nav>
 
 <dialog id="about">
   <h2>Orbital Launches</h2>
-  <p>Zeigt geplante orbitale Raketenstarts nach der <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener">Wikipedia-Liste</a>. Termine sind vorläufig und können sich jederzeit ändern.</p>
-  <p class="muted">Daten-Stand: <span id="updated"></span></p>
+  <p>Zeigt geplante orbitale Raketenstarts nach der <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener">Wikipedia-Liste</a>. Die Daten werden stündlich automatisch synchronisiert. Termine sind vorläufig und können sich jederzeit ändern.</p>
+  <p class="muted">Daten-Stand: <span id="updated">-</span></p>
   <form method="dialog"><button class="primary">Schließen</button></form>
 </dialog>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="data/sites.js"></script>
-<script src="data/launches.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
