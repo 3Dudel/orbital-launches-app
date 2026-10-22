@@ -1,10 +1,12 @@
-:root{--bg:#f3f1ec;--card:#fffdf9;--text:#1d1b17;--muted:#7a756b;--accent:#c2410c;--border:#e1ddd3;--bar:#f3f1ec;--hot:#c2410c;--cold:#6b7280}
-:root[data-mode=dark]{--bg:#16150f;--card:#1f1d16;--text:#ece8dd;--muted:#97917f;--accent:#f08a4b;--border:#33302511;--bar:#16150f;--hot:#f08a4b;--cold:#8a8577;--border:#34312a}
+:root{--bg:#f3f1ec;--card:#fffdf9;--text:#1d1b17;--muted:#7a756b;--accent:#c2410c;--border:#e1ddd3;--bar:#f3f1ec;--hot:#c2410c}
+:root[data-mode=dark]{--bg:#16150f;--card:#1f1d16;--text:#ece8dd;--muted:#97917f;--accent:#f08a4b;--bar:#16150f;--hot:#f08a4b;--border:#34312a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{font-family:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.35}
 .ic{width:22px;height:22px;flex:none}
-.appbar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;height:calc(env(safe-area-inset-top) + 44px);padding:env(safe-area-inset-top) 6px 0 14px;background:var(--bar);border-bottom:1px solid var(--border)}
+.appbar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;height:calc(env(safe-area-inset-top) + 44px);padding:env(safe-area-inset-top) 6px 0 12px;background:var(--bar);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand img{width:26px;height:26px;border-radius:6px;display:block}
 .appbar h1{font-size:1rem;font-weight:700;margin:0;letter-spacing:.01em}
 .icon-btn{background:none;border:0;color:var(--text);width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .icon-btn:active{background:var(--border)}
@@ -24,7 +26,7 @@ main{padding:calc(env(safe-area-inset-top) + 52px) 12px calc(env(safe-area-inset
 input[type=search]{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font:inherit;outline:none}
 input[type=search]:focus,select:focus{border-color:var(--accent)}
 .filters{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-select{width:100%;padding:8px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font:inherit;font-size:.88rem;outline:none;min-width:0}
+select{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font:inherit;font-size:.88rem;outline:none;min-width:0}
 select.on{border-color:var(--accent);color:var(--accent);font-weight:600}
 .hero{border:1px solid var(--border);border-left:4px solid var(--accent);background:var(--card);border-radius:8px;padding:10px 12px;margin-bottom:10px}
 .hero small{color:var(--muted)}
@@ -62,11 +64,13 @@ details[open] .chev{transform:rotate(90deg)}
 .pin{width:26px;height:26px;border-radius:50%;background:var(--hot);color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;box-shadow:0 1px 5px rgba(0,0,0,.45)}
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:1000;display:flex;background:var(--bar);border-top:1px solid var(--border);padding:0 0 env(safe-area-inset-bottom)}
 .tab{flex:1;background:none;border:0;color:var(--muted);font:inherit;font-size:.7rem;padding:6px 0 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;border-top:3px solid transparent;margin-top:-1px}
-.tab .ic{width:22px;height:22px}
 .tab.active{color:var(--accent);font-weight:700;border-top-color:var(--accent)}
 .muted{color:var(--muted)}.empty{text-align:center;color:var(--muted);padding:36px 0}
-dialog{border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);max-width:420px}
+dialog{border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);max-width:440px;max-height:85vh;overflow:auto}
 dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog h2{margin:0 0 8px}
+dialog h3{margin:14px 0 4px;font-size:.95rem}
+dialog p{font-size:.9rem;margin:6px 0}
 .primary{background:var(--accent);color:#fff;border:0;padding:9px 16px;border-radius:6px;cursor:pointer;font:inherit}
 a{color:var(--accent)}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card);color:var(--text)}
