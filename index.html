@@ -3,12 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
 <title>Orbital Launches</title>
 <meta name="theme-color" content="#f3f1ec">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="style.css">
+<script>
+(function(){try{var t=localStorage.getItem('theme')||'system';var d=t==='dark'||((t==='system'||t==='auto')&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.mode=d?'dark':'light'}catch(e){}})();
+</script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -33,7 +37,7 @@
       <div class="menu-label">Darstellung</div>
       <button data-theme="light"><svg class="ic"><use href="#i-sun"/></svg>Hell</button>
       <button data-theme="dark"><svg class="ic"><use href="#i-moon"/></svg>Dunkel</button>
-      <button data-theme="auto"><svg class="ic"><use href="#i-auto"/></svg>System</button>
+      <button data-theme="system"><svg class="ic"><use href="#i-auto"/></svg>System</button>
       <div class="menu-label">Zeit</div>
       <button id="tzBtn"><svg class="ic"><use href="#i-clock"/></svg>Zeitzone: <span id="tzLabel">Lokal</span></button>
       <hr>
@@ -56,7 +60,7 @@
       </div>
     </div>
     <div id="countdown" class="hero"></div>
-    <div id="list"></div>
+    <div id="list"><div class="empty">Lade Daten ...</div></div>
   </section>
 
   <section id="view-map" class="view">
@@ -93,8 +97,11 @@
   <form method="dialog"><button class="primary">Schließen</button></form>
 </dialog>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="data/sites.js"></script>
 <script src="app.js"></script>
+<script>
+// Leaflet separat laden, damit ein Ausfall die restliche App nicht blockiert
+(function(){var s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.async=true;document.head.appendChild(s)})();
+</script>
 </body>
 </html>

@@ -1,19 +1,22 @@
 (function(){
 'use strict';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const S=window.SITES;
-let L=[];
-const state={tz:localStorage.getItem('tz')||'local',theme:localStorage.getItem('theme')||'auto',q:'',sq:'',sel:null,
+const S=window.SITES||{};
+let LAUNCHES=[];
+const state={tz:localStorage.getItem('tz')||'local',theme:localStorage.getItem('theme')||'system',q:'',sq:'',sel:null,
   f:{company:'',rocket:'',country:'',type:''},sf:{company:'',rocket:'',country:'',type:''}};
+if(state.theme==='auto')state.theme='system';
+const mq=matchMedia('(prefers-color-scheme: dark)');
 
 // ---- Theme ----
 function applyTheme(){
-  const dark=state.theme==='dark'||(state.theme==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  const dark=state.theme==='dark'||(state.theme==='system'&&mq.matches);
   document.documentElement.dataset.mode=dark?'dark':'light';
-  document.querySelector('meta[name=theme-color]').content=dark?'#16150f':'#f3f1ec';
+  const tc=document.querySelector('meta[name=theme-color]');
+  if(tc)tc.content=dark?'#16150f':'#f3f1ec';
   $$('[data-theme]').forEach(b=>b.classList.toggle('sel',b.dataset.theme===state.theme));
 }
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
+if(mq.addEventListener)mq.addEventListener('change',applyTheme);else if(mq.addListener)mq.addListener(applyTheme);
 
 // ---- Menue ----
 $('#menuBtn').onclick=e=>{e.stopPropagation();$('#menu').hidden=!$('#menu').hidden};
@@ -27,12 +30,17 @@ $('#tzLabel').textContent=state.tz==='local'?'Lokal':'UTC';
 // ---- Tabs ----
 const titles={list:'N\u00e4chste Starts',map:'Karte',sites:'Startpl\u00e4tze'};
 let map=null,layer=null;
+function mapMsg(t){
+  const b=$('#mapinfo');b.hidden=false;b.innerHTML='<div class="t2">'+esc(t)+'</div>';
+}
 function show(v){
   $$('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));
   $$('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
   $('#title').textContent=titles[v];
-  if(v==='map'){initMap();setTimeout(()=>{map.invalidateSize();drawMap()},30)}
-  else scrollTo(0,0);
+  if(v==='map'){
+    if(!window.L||!window.L.map){mapMsg('Kartenbibliothek konnte nicht geladen werden. Bitte Internetverbindung pr\u00fcfen.');return}
+    try{initMap();setTimeout(()=>{map.invalidateSize();drawMap()},30)}catch(e){mapMsg('Kartenfehler: '+e.message)}
+  } else scrollTo(0,0);
 }
 $$('.tab').forEach(t=>t.onclick=()=>show(t.dataset.view));
 
@@ -48,17 +56,17 @@ function rel(ms){
   const s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sec=s%60;
   return (d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
 }
-function upcoming(){const now=Date.now()-2*3600e3;return L.filter(l=>new Date(l.utc)>=now).sort((a,b)=>new Date(a.utc)-new Date(b.utc))}
+function upcoming(){const now=Date.now()-2*3600e3;return LAUNCHES.filter(l=>new Date(l.utc)>=now).sort((a,b)=>new Date(a.utc)-new Date(b.utc))}
 
-// Firma aus Rakete ableiten
 const COMPANIES=[
  [/Falcon|Starship|Dragon/i,'SpaceX'],[/Electron|Neutron/i,'Rocket Lab'],[/Vulcan|Atlas|Delta/i,'ULA'],
  [/New Glenn|New Shepard/i,'Blue Origin'],[/Ariane|Vega/i,'Arianespace'],[/Antares|Minotaur|Pegasus/i,'Northrop Grumman'],
  [/Firefly|Alpha/i,'Firefly'],[/Terran|Relativity/i,'Relativity Space'],
- [/CZ-|Langer Marsch|Long March|Kuaizhou|Ceres|Zhuque|Tianlong|Kinetica|Gravity|Jielong|Lijian|Hyperbola|Smart Dragon/i,'China (CASC/Privat)'],
+ [/Zhuque/i,'LandSpace'],
+ [/CZ-|Langer Marsch|Long March|Kuaizhou|Ceres|Tianlong|Kinetica|Gravity|Jielong|Lijian|Hyperbola|Smart Dragon/i,'China (CASC/Privat)'],
  [/Sojus|Soyuz|Proton|Angara|Rus-M/i,'Roskosmos'],[/PSLV|GSLV|LVM3|SSLV/i,'ISRO'],[/H3|H-IIA|H-IIB|Epsilon/i,'JAXA / MHI'],
  [/Nuri|Innospace|Hanbit/i,'Korea'],[/Eris|Gilmour/i,'Gilmour Space'],[/RFA|Spectrum|Isar/i,'Isar / RFA'],[/Shavit/i,'Israel'],[/Simorgh|Qaem|Qased|Safir/i,'Iran'],
- [/Unha|Chollima/i,'Nordkorea'],[/Vikram|Agnibaan/i,'Indien (privat)'],[/Zhuque/i,'LandSpace']
+ [/Unha|Chollima/i,'Nordkorea'],[/Vikram|Agnibaan/i,'Indien (privat)']
 ];
 function company(l){for(const [re,n] of COMPANIES)if(re.test(l.rocket||''))return n;return 'Sonstige'}
 const typeOf=l=>l.type||'Unbekannt';
@@ -117,15 +125,16 @@ function tick(){
   const n=upcoming().find(l=>new Date(l.utc)>Date.now());
   $('#countdown').innerHTML=n?`<small>N\u00e4chster Start</small><div class="name">${esc(n.rocket)} \u00b7 ${esc(n.payload)}</div><div class="big">${rel(new Date(n.utc)-Date.now())}</div><small>${esc(site(n).name)}</small>`:'<small>Keine anstehenden Starts</small>';
 }
-$('#search').oninput=e=>{state.q=e.target.value;render()};
-setInterval(tick,1000);
+$('#search').oninput=e=>{state.q=e.target.value;safe(render,'#list')};
+setInterval(()=>{try{tick()}catch(e){}},1000);
 
-// ---- Karte (Leaflet + OpenStreetMap), nur Startplaetze mit geplanten Starts ----
+// ---- Karte (Leaflet + OpenStreetMap) ----
 function initMap(){
   if(map)return;
-  map=L.map('map',{worldCopyJump:true,zoomControl:true,attributionControl:true}).setView([25,10],2);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(map);
-  layer=L.layerGroup().addTo(map);
+  map=window.L.map('map',{worldCopyJump:true,zoomControl:false,attributionControl:true}).setView([25,10],2);
+  window.L.control.zoom({position:'bottomright'}).addTo(map);
+  window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(map);
+  layer=window.L.layerGroup().addTo(map);
   map.on('click',()=>{state.sel=null;info()});
 }
 function drawMap(){
@@ -134,9 +143,9 @@ function drawMap(){
   const up=upcoming(),pts=[];
   for(const [id,s] of Object.entries(S)){
     const n=up.filter(l=>l.site===id).length;
-    if(!n)continue;
-    const icon=L.divIcon({className:'',html:`<div class="pin">${n}</div>`,iconSize:[26,26],iconAnchor:[13,13]});
-    L.marker([s.lat,s.lon],{icon}).addTo(layer).on('click',e=>{L.DomEvent.stopPropagation(e);state.sel=id;info()});
+    if(!n||s.lat==null)continue;
+    const icon=window.L.divIcon({className:'',html:`<div class="pin">${n}</div>`,iconSize:[26,26],iconAnchor:[13,13]});
+    window.L.marker([s.lat,s.lon],{icon}).addTo(layer).on('click',e=>{window.L.DomEvent.stopPropagation(e);state.sel=id;info()});
     pts.push([s.lat,s.lon]);
   }
   if(pts.length&&!drawMap.fitted){map.fitBounds(pts,{padding:[40,40],maxZoom:4});drawMap.fitted=true}
@@ -151,7 +160,7 @@ function info(){
   box.querySelector('.x').onclick=()=>{state.sel=null;info()};
 }
 
-// ---- Startplaetze: erst mit geplanten Starts, dann weitere ----
+// ---- Startplaetze ----
 function siteCard(s,n,planned){
   return `<details class="card"><summary><span class="cc">${esc(s.code||'--')}</span><div class="grow"><div class="t1">${esc(s.name)}</div><div class="t2">${esc(s.country)}</div></div>${planned?`<span class="badge hot">${n.length} geplant</span>`:''}<span class="chev">\u203a</span></summary><div class="body"><p>${esc(s.info)}</p><dl><dt>Koordinaten</dt><dd>${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}</dd></dl>${n.map(l=>`<div class="t2">${fmtShort(l)} ${fmtTime(l)} \u2013 ${esc(l.rocket)} \u00b7 ${esc(l.payload)}</div>`).join('')}<a class="btn" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${s.lat}&mlon=${s.lon}#map=10/${s.lat}/${s.lon}">Auf Karte</a></div></details>`;
 }
@@ -176,20 +185,29 @@ function renderSites(){
   if(rest.length)html+=`<div class="sep">Weitere Startpl\u00e4tze (${rest.length})</div>`+rest.map(x=>siteCard(x.s,x.n,false)).join('');
   $('#sites').innerHTML=html||'<div class="empty">Nichts gefunden.</div>';
 }
-$('#siteSearch').oninput=e=>{state.sq=e.target.value;renderSites()};
+$('#siteSearch').oninput=e=>{state.sq=e.target.value;safe(renderSites,'#sites')};
 
-function renderAll(){render();renderSites();drawMap();info()}
+function safe(fn,sel){
+  try{fn()}catch(e){console.error(e);const el=$(sel);if(el)el.innerHTML='<div class="empty">Fehler: '+esc(e.message)+'</div>'}
+}
+function renderAll(){
+  safe(render,'#list');
+  safe(renderSites,'#sites');
+  try{drawMap()}catch(e){console.error(e)}
+}
 
-// ---- Daten laden (von Wikipedia per Workflow synchronisiert) ----
+// ---- Daten laden ----
 async function load(){
   try{
     const r=await fetch('data/launches.json?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
     const j=await r.json();
-    L=j.launches||[];
-    $('#updated').textContent=new Date(j.updated).toLocaleString('de-DE');
+    LAUNCHES=Array.isArray(j)?j:(j.launches||[]);
+    if(j.updated)$('#updated').textContent=new Date(j.updated).toLocaleString('de-DE');
   }catch(e){
-    $('#list').innerHTML='<div class="empty">Daten konnten nicht geladen werden.</div>';
-    return;
+    console.error(e);
+    if(window.LAUNCHES_FALLBACK)LAUNCHES=window.LAUNCHES_FALLBACK;
+    else{$('#list').innerHTML='<div class="empty">Daten konnten nicht geladen werden: '+esc(e.message)+'</div>';return}
   }
   renderAll();
 }
