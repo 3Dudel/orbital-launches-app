@@ -24,6 +24,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.menu-wrap'))$('#men
 $$('[data-theme]').forEach(b=>b.onclick=()=>{state.theme=b.dataset.theme;localStorage.setItem('theme',state.theme);applyTheme();$('#menu').hidden=true});
 $('#tzBtn').onclick=()=>{state.tz=state.tz==='local'?'UTC':'local';localStorage.setItem('tz',state.tz);$('#tzLabel').textContent=state.tz==='local'?'Lokal':'UTC';renderAll()};
 $('#aboutBtn').onclick=()=>{$('#menu').hidden=true;$('#about').showModal()};
+$('#legalBtn').onclick=()=>{$('#menu').hidden=true;$('#legal').showModal()};
 $('#reloadBtn').onclick=()=>{$('#menu').hidden=true;load()};
 $('#tzLabel').textContent=state.tz==='local'?'Lokal':'UTC';
 
@@ -128,12 +129,18 @@ function tick(){
 $('#search').oninput=e=>{state.q=e.target.value;safe(render,'#list')};
 setInterval(()=>{try{tick()}catch(e){}},1000);
 
-// ---- Karte (Leaflet + OpenStreetMap) ----
+// ---- Karte (Leaflet + OpenStreetMap), nicht endlos scrollbar ----
 function initMap(){
   if(map)return;
-  map=window.L.map('map',{worldCopyJump:true,zoomControl:false,attributionControl:true}).setView([25,10],2);
+  const bounds=window.L.latLngBounds([[-85,-180],[85,180]]);
+  map=window.L.map('map',{
+    zoomControl:false,attributionControl:true,
+    worldCopyJump:false,
+    maxBounds:bounds,maxBoundsViscosity:1.0,
+    minZoom:2,maxZoom:18
+  }).setView([25,10],2);
   window.L.control.zoom({position:'bottomright'}).addTo(map);
-  window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(map);
+  window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,noWrap:true,bounds:bounds,attribution:'&copy; OpenStreetMap'}).addTo(map);
   layer=window.L.layerGroup().addTo(map);
   map.on('click',()=>{state.sel=null;info()});
 }
