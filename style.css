@@ -4,6 +4,7 @@
 html,body{margin:0;height:100%}
 body{font-family:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.35}
 .ic{width:22px;height:22px;flex:none}
+.brand-ic{width:26px;height:26px;color:var(--accent)}
 .appbar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;height:calc(env(safe-area-inset-top) + 44px);padding:env(safe-area-inset-top) 6px 0 12px;background:var(--bar);border-bottom:1px solid var(--border)}
 .brand{display:flex;align-items:center;gap:9px;min-width:0}
 .brand img{width:26px;height:26px;border-radius:6px;display:block}
@@ -25,7 +26,7 @@ main{padding:calc(env(safe-area-inset-top) + 52px) 12px calc(env(safe-area-inset
 .toolbar{margin-bottom:10px}
 input[type=search]{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font:inherit;outline:none}
 input[type=search]:focus,select:focus{border-color:var(--accent)}
-.filters{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin-top:6px}
 select{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font:inherit;font-size:.88rem;outline:none;min-width:0}
 select.on{border-color:var(--accent);color:var(--accent);font-weight:600}
 .hero{border:1px solid var(--border);border-left:4px solid var(--accent);background:var(--card);border-radius:8px;padding:10px 12px;margin-bottom:10px}
