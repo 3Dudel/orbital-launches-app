@@ -1,5 +1,5 @@
-:root{--bg:#f3f1ec;--card:#fffdf9;--text:#1d1b17;--muted:#7a756b;--accent:#c2410c;--border:#e1ddd3;--bar:#f3f1ec;--hot:#c2410c}
-:root[data-mode=dark]{--bg:#16150f;--card:#1f1d16;--text:#ece8dd;--muted:#97917f;--accent:#f08a4b;--bar:#16150f;--hot:#f08a4b;--border:#34312a}
+:root{--bg:#f3f1ec;--card:#fffdf9;--text:#1d1b17;--muted:#7a756b;--accent:#c2410c;--border:#e1ddd3;--bar:#f3f1ec;--hot:#c2410c;--ok:#15803d}
+:root[data-mode=dark]{--bg:#16150f;--card:#1f1d16;--text:#ece8dd;--muted:#97917f;--accent:#f08a4b;--bar:#16150f;--hot:#f08a4b;--border:#34312a;--ok:#4ade80}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{font-family:"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.35}
@@ -53,6 +53,15 @@ details[open] .chev{transform:rotate(90deg)}
 .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
 .badge{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:4px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
 .badge.hot{border-color:var(--accent);color:var(--accent);font-weight:700}
+.badge.ok{border-color:var(--ok);color:var(--ok)}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.diff{color:var(--accent)}
+.streams{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.live{flex:none;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;font-size:.8rem;padding-left:2px}
+.live.now{background:#dc2626;animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.55)}70%{box-shadow:0 0 0 9px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+.srcinfo{font-size:.75rem;color:var(--muted);margin:0 2px 8px}
+.srcinfo.warn{color:var(--accent)}
 .sep{margin:14px 2px 6px;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
 .mapwrap{position:fixed;top:calc(env(safe-area-inset-top) + 44px);bottom:calc(env(safe-area-inset-bottom) + 56px);left:0;right:0}
 #map{position:absolute;inset:0;background:var(--border)}
