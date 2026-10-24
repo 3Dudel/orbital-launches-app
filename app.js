@@ -4,7 +4,7 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const S=window.SITES||{};
 let LAUNCHES=[];
 const state={tz:localStorage.getItem('tz')||'local',theme:localStorage.getItem('theme')||'system',q:'',sq:'',sel:null,
-  f:{company:'',rocket:'',country:'',type:''},sf:{company:'',rocket:'',country:'',type:''}};
+  f:{company:'',rocket:'',pad:'',country:'',type:''},sf:{company:'',rocket:'',pad:'',country:'',type:''}};
 if(state.theme==='auto')state.theme='system';
 const mq=matchMedia('(prefers-color-scheme: dark)');
 
@@ -50,7 +50,7 @@ const tzOpt=()=>state.tz==='UTC'?{timeZone:'UTC'}:{};
 const fmtDay=d=>d.toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long',year:'numeric',...tzOpt()});
 const fmtTime=l=>{const d=new Date(l.utc);return (l.approx?'ca. ':'')+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',...tzOpt()})+(state.tz==='UTC'?' UTC':'')};
 const fmtShort=l=>new Date(l.utc).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',...tzOpt()});
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s==null?'':s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const site=l=>S[l.site]||{name:l.pad||'Unbekannt',country:'Unbekannt',info:''};
 function rel(ms){
   if(ms<=0)return 'l\u00e4uft';
@@ -60,46 +60,61 @@ function rel(ms){
 function upcoming(){const now=Date.now()-2*3600e3;return LAUNCHES.filter(l=>new Date(l.utc)>=now).sort((a,b)=>new Date(a.utc)-new Date(b.utc))}
 
 const COMPANIES=[
- [/Falcon|Starship|Dragon/i,'SpaceX'],[/Electron|Neutron/i,'Rocket Lab'],[/Vulcan|Atlas|Delta/i,'ULA'],
- [/New Glenn|New Shepard/i,'Blue Origin'],[/Ariane|Vega/i,'Arianespace'],[/Antares|Minotaur|Pegasus/i,'Northrop Grumman'],
- [/Firefly|Alpha/i,'Firefly'],[/Terran|Relativity/i,'Relativity Space'],
- [/Zhuque/i,'LandSpace'],
- [/CZ-|Langer Marsch|Long March|Kuaizhou|Ceres|Tianlong|Kinetica|Gravity|Jielong|Lijian|Hyperbola|Smart Dragon/i,'China (CASC/Privat)'],
- [/Sojus|Soyuz|Proton|Angara|Rus-M/i,'Roskosmos'],[/PSLV|GSLV|LVM3|SSLV/i,'ISRO'],[/H3|H-IIA|H-IIB|Epsilon/i,'JAXA / MHI'],
- [/Nuri|Innospace|Hanbit/i,'Korea'],[/Eris|Gilmour/i,'Gilmour Space'],[/RFA|Spectrum|Isar/i,'Isar / RFA'],[/Shavit/i,'Israel'],[/Simorgh|Qaem|Qased|Safir/i,'Iran'],
- [/Unha|Chollima/i,'Nordkorea'],[/Vikram|Agnibaan/i,'Indien (privat)']
+  [/Falcon|Starship|Dragon/i,'SpaceX'],[/Electron|Neutron/i,'Rocket Lab'],[/Vulcan|Atlas|Delta/i,'ULA'],
+  [/New Glenn|New Shepard/i,'Blue Origin'],[/Ariane|Vega/i,'Arianespace'],[/Antares|Minotaur|Pegasus/i,'Northrop Grumman'],
+  [/Firefly|Alpha/i,'Firefly'],[/Terran|Relativity/i,'Relativity Space'],
+  [/Zhuque/i,'LandSpace'],
+  [/CZ-|Langer Marsch|Long March|Kuaizhou|Ceres|Tianlong|Kinetica|Gravity|Jielong|Lijian|Hyperbola|Smart Dragon/i,'China (CASC/Privat)'],
+  [/Sojus|Soyuz|Proton|Angara|Rus-M/i,'Roskosmos'],[/PSLV|GSLV|LVM3|SSLV/i,'ISRO'],[/H3|H-IIA|H-IIB|Epsilon/i,'JAXA / MHI'],
+  [/Nuri|Innospace|Hanbit/i,'Korea'],[/Eris|Gilmour/i,'Gilmour Space'],[/RFA|Spectrum|Isar/i,'Isar / RFA'],[/Shavit/i,'Israel'],[/Simorgh|Qaem|Qased|Safir/i,'Iran'],
+  [/Unha|Chollima/i,'Nordkorea'],[/Vikram|Agnibaan/i,'Indien (privat)']
 ];
 function company(l){for(const [re,n] of COMPANIES)if(re.test(l.rocket||''))return n;return 'Sonstige'}
 const typeOf=l=>l.type||'Unbekannt';
+// Startplatz-Anzeige: bevorzugt pad, sonst Site-Name aus sites.js
+const padOf=l=>{const s=site(l);return l.pad||s.name||'Unbekannt'};
 
 function fillSelect(el,label,values,cur){
   el.innerHTML=`<option value="">${label}: alle</option>`+values.map(v=>`<option ${v===cur?'selected':''} value="${esc(v)}">${esc(v)}</option>`).join('');
   el.classList.toggle('on',!!cur);
 }
 const uniq=a=>[...new Set(a.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de'));
+
+// Filter-Konfiguration: jede Definition zieht ihre Werte dynamisch aus den Daten.
+// Reihenfolge = Reihenfolge in der UI. Neue Felder einfach hier ergaenzen.
+const FILTER_DEFS=[
+  {key:'company', label:'Firma',  get:l=>company(l)},
+  {key:'rocket',  label:'Rakete', get:l=>l.rocket},
+  {key:'pad',     label:'Startplatz', get:l=>padOf(l)},
+  {key:'country', label:'Land',   get:l=>site(l).country},
+  {key:'type',    label:'Zweck',  get:l=>typeOf(l)},
+];
+
 function match(l,f,q){
   const s=site(l);
   if(f.company&&company(l)!==f.company)return false;
   if(f.rocket&&l.rocket!==f.rocket)return false;
+  if(f.pad&&padOf(l)!==f.pad)return false;
   if(f.country&&s.country!==f.country)return false;
   if(f.type&&typeOf(l)!==f.type)return false;
   if(q&&![l.rocket,l.payload,l.detail,l.type,s.name,l.pad,company(l),s.country].join(' ').toLowerCase().includes(q))return false;
   return true;
 }
+
 function setupFilters(ids,f,cb){
   const up=upcoming();
-  const [c,r,co,t]=ids.map(i=>$(i));
-  fillSelect(c,'Firma',uniq(up.map(company)),f.company);
-  fillSelect(r,'Rakete',uniq(up.map(l=>l.rocket)),f.rocket);
-  fillSelect(co,'Land',uniq(up.map(l=>site(l).country)),f.country);
-  fillSelect(t,'Zweck',uniq(up.map(typeOf)),f.type);
-  c.onchange=()=>{f.company=c.value;cb()};r.onchange=()=>{f.rocket=r.value;cb()};
-  co.onchange=()=>{f.country=co.value;cb()};t.onchange=()=>{f.type=t.value;cb()};
+  ids.forEach((selId,i)=>{
+    const def=FILTER_DEFS[i];
+    if(!def)return;
+    const el=$(selId);
+    fillSelect(el,def.label,uniq(up.map(def.get)),f[def.key]);
+    el.onchange=()=>{f[def.key]=el.value;cb()};
+  });
 }
 
 // ---- Liste ----
 function render(){
-  setupFilters(['#fCompany','#fRocket','#fCountry','#fType'],state.f,render);
+  setupFilters(['#fCompany','#fRocket','#fPad','#fCountry','#fType'],state.f,render);
   const q=state.q.toLowerCase();
   const items=upcoming().filter(l=>match(l,state.f,q));
   let html='',last='';
@@ -107,24 +122,29 @@ function render(){
     const day=fmtDay(new Date(l.utc));
     if(day!==last){html+=`<div class="day">${day}</div>`;last=day}
     const s=site(l);
-    html+=`<details class="card"><summary><span class="cc">${esc(s.code||'--')}</span><div class="grow"><div class="t1">${esc(l.rocket)}</div><div class="t2">${esc(l.payload)} \u00b7 ${esc(s.short||s.name)}</div></div><div class="time">${fmtTime(l)}<small>${fmtShort(l)}</small></div><span class="chev">\u203a</span></summary>
+    html+=`<details class="card"><summary>
+      <div class="cc">${esc(s.code||'--')}</div>
+      <div class="grow"><div class="t1">${esc(l.rocket)}</div><div class="t2">${esc(l.payload)} \u00b7 ${esc(s.short||s.name)}</div></div>
+      <div class="time">${fmtTime(l)}<small>${fmtShort(l)}</small></div>
+      <div class="chev">\u203a</div>
+    </summary>
     <div class="body"><dl>
-    <dt>Rakete</dt><dd>${esc(l.rocket)} <span class="badge">${esc(company(l))}</span></dd>
-    <dt>Nutzlast</dt><dd>${esc(l.payload)}</dd>
-    ${l.detail?`<dt>Details</dt><dd>${esc(l.detail)}</dd>`:''}
-    ${l.type?`<dt>Zweck</dt><dd>${esc(l.type)}</dd>`:''}
-    <dt>Startplatz</dt><dd>${esc(s.name)}${l.pad?` <span class="badge">${esc(l.pad)}</span>`:''}</dd>
-    <dt>Land</dt><dd>${esc(s.country)}</dd>
-    <dt>UTC</dt><dd>${new Date(l.utc).toISOString().replace('T',' ').slice(0,16)}${l.approx?' (ca.)':''}</dd>
-    </dl>${s.lat!=null?`<a class="btn" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${s.lat}&mlon=${s.lon}#map=9/${s.lat}/${s.lon}">Auf Karte</a>`:''}
-    <a class="btn ghost" target="_blank" rel="noopener" href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts">Wikipedia</a></div></details>`;
+      <dt>Rakete</dt><dd>${esc(l.rocket)} ${esc(company(l))}</dd>
+      <dt>Nutzlast</dt><dd>${esc(l.payload)}</dd>
+      ${l.detail?`<dt>Details</dt><dd>${esc(l.detail)}</dd>`:''}
+      ${l.type?`<dt>Zweck</dt><dd>${esc(l.type)}</dd>`:''}
+      <dt>Startplatz</dt><dd>${esc(s.name)}${l.pad?` \u00b7 ${esc(l.pad)}`:''}</dd>
+      <dt>Land</dt><dd>${esc(s.country)}</dd>
+      <dt>UTC</dt><dd>${new Date(l.utc).toISOString().replace('T',' ').slice(0,16)}${l.approx?' (ca.)':''}</dd>
+      ${s.lat!=null?`<dt>Karte</dt><dd><a href="https://www.openstreetmap.org/?mlat=${s.lat}&mlon=${s.lon}#map=9/${s.lat}/${s.lon}" target="_blank" rel="noopener">Auf Karte</a> <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener">Wikipedia</a></dd>`:''}
+    </dl></div></details>`;
   }
   $('#list').innerHTML=html||'<div class="empty">Keine Starts gefunden.</div>';
   tick();
 }
 function tick(){
   const n=upcoming().find(l=>new Date(l.utc)>Date.now());
-  $('#countdown').innerHTML=n?`<small>N\u00e4chster Start</small><div class="name">${esc(n.rocket)} \u00b7 ${esc(n.payload)}</div><div class="big">${rel(new Date(n.utc)-Date.now())}</div><small>${esc(site(n).name)}</small>`:'<small>Keine anstehenden Starts</small>';
+  $('#countdown').innerHTML=n?`N\u00e4chster Start<div class="name">${esc(n.rocket)} \u00b7 ${esc(n.payload)}</div><div class="big">${rel(new Date(n.utc)-Date.now())}</div><small>${esc(site(n).name)}</small>`:'Keine anstehenden Starts';
 }
 $('#search').oninput=e=>{state.q=e.target.value;safe(render,'#list')};
 setInterval(()=>{try{tick()}catch(e){}},1000);
@@ -140,7 +160,7 @@ function initMap(){
     minZoom:2,maxZoom:18
   }).setView([25,10],2);
   window.L.control.zoom({position:'bottomright'}).addTo(map);
-  window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,noWrap:true,bounds:bounds,attribution:'&copy; OpenStreetMap'}).addTo(map);
+  window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,noWrap:true,bounds:bounds,attribution:'\u00a9 OpenStreetMap'}).addTo(map);
   layer=window.L.layerGroup().addTo(map);
   map.on('click',()=>{state.sel=null;info()});
 }
@@ -163,18 +183,25 @@ function info(){
   if(!state.sel){box.hidden=true;return}
   const s=S[state.sel],ls=upcoming().filter(l=>l.site===state.sel);
   box.hidden=false;
-  box.innerHTML=`<button class="x" aria-label="Schlie\u00dfen">\u00d7</button><b>${esc(s.name)}</b><div class="t2">${esc(s.country)}</div><p>${esc(s.info)}</p>${ls.map(l=>`<div class="t2">${fmtShort(l)} ${fmtTime(l)} \u2013 ${esc(l.rocket)} \u00b7 ${esc(l.payload)}</div>`).join('')}`;
+  box.innerHTML=`<button class="x" aria-label="Schlie\u00dfen">\u00d7</button><b>${esc(s.name)}</b><p class="muted">${esc(s.country)}</p><p>${esc(s.info)}</p>${ls.map(l=>`<p>${fmtShort(l)} ${fmtTime(l)} \u2013 ${esc(l.rocket)} \u00b7 ${esc(l.payload)}</p>`).join('')}`;
   box.querySelector('.x').onclick=()=>{state.sel=null;info()};
 }
 
 // ---- Startplaetze ----
 function siteCard(s,n,planned){
-  return `<details class="card"><summary><span class="cc">${esc(s.code||'--')}</span><div class="grow"><div class="t1">${esc(s.name)}</div><div class="t2">${esc(s.country)}</div></div>${planned?`<span class="badge hot">${n.length} geplant</span>`:''}<span class="chev">\u203a</span></summary><div class="body"><p>${esc(s.info)}</p><dl><dt>Koordinaten</dt><dd>${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}</dd></dl>${n.map(l=>`<div class="t2">${fmtShort(l)} ${fmtTime(l)} \u2013 ${esc(l.rocket)} \u00b7 ${esc(l.payload)}</div>`).join('')}<a class="btn" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat=${s.lat}&mlon=${s.lon}#map=10/${s.lat}/${s.lon}">Auf Karte</a></div></details>`;
+  return `<details class="card"><summary>
+    <div class="cc">${esc(s.code||'--')}</div>
+    <div class="grow"><div class="t1">${esc(s.name)}</div><div class="t2">${esc(s.country)}${planned?` \u00b7 ${n.length} geplant`:''}</div></div>
+    <div class="chev">\u203a</div>
+  </summary>
+  <div class="body"><p>${esc(s.info)}</p><dl>
+    <dt>Koordinaten</dt><dd>${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}</dd>
+  </dl>${n.map(l=>`<p>${fmtShort(l)} ${fmtTime(l)} \u2013 ${esc(l.rocket)} \u00b7 ${esc(l.payload)}</p>`).join('')}<a class="btn ghost" href="https://www.openstreetmap.org/?mlat=${s.lat}&mlon=${s.lon}#map=10/${s.lat}/${s.lon}" target="_blank" rel="noopener">Auf Karte</a></div></details>`;
 }
 function renderSites(){
-  setupFilters(['#sCompany','#sRocket','#sCountry','#sType'],state.sf,renderSites);
+  setupFilters(['#sCompany','#sRocket','#sPad','#sCountry','#sType'],state.sf,renderSites);
   const q=state.sq.toLowerCase(),up=upcoming();
-  const filtering=state.sf.company||state.sf.rocket||state.sf.type;
+  const filtering=state.sf.company||state.sf.rocket||state.sf.type||state.sf.pad;
   const arr=Object.entries(S).map(([id,s])=>{
     const n=up.filter(l=>l.site===id&&match(l,{...state.sf,country:''},''));
     return {id,s,n};
@@ -185,17 +212,16 @@ function renderSites(){
     return true;
   });
   const byName=(a,b)=>a.s.name.localeCompare(b.s.name,'de');
-  const planned=arr.filter(x=>x.n.length).sort((a,b)=>b.n.length-a.n.length||byName(a,b));
+  const planned=arr.filter(x=>x.n.length).sort(byName);
   const rest=arr.filter(x=>!x.n.length).sort(byName);
   let html='';
-  if(planned.length)html+=`<div class="sep">Mit geplanten Starts (${planned.length})</div>`+planned.map(x=>siteCard(x.s,x.n,true)).join('');
-  if(rest.length)html+=`<div class="sep">Weitere Startpl\u00e4tze (${rest.length})</div>`+rest.map(x=>siteCard(x.s,x.n,false)).join('');
-  $('#sites').innerHTML=html||'<div class="empty">Nichts gefunden.</div>';
+  if(planned.length)html+=`<div class="sep">Geplant</div>`+planned.map(x=>siteCard(x.s,x.n,true)).join('');
+  if(rest.length)html+=`<div class="sep">Weitere</div>`+rest.map(x=>siteCard(x.s,x.n,false)).join('');
+  $('#sites').innerHTML=html||'<div class="empty">Keine Startpl\u00e4tze gefunden.</div>';
 }
-$('#siteSearch').oninput=e=>{state.sq=e.target.value;safe(renderSites,'#sites')};
 
 function safe(fn,sel){
-  try{fn()}catch(e){console.error(e);const el=$(sel);if(el)el.innerHTML='<div class="empty">Fehler: '+esc(e.message)+'</div>'}
+  try{const el=$(sel);if(el)fn();else console.warn('missing',sel)}catch(e){console.error(e)}
 }
 function renderAll(){
   safe(render,'#list');
@@ -206,15 +232,15 @@ function renderAll(){
 // ---- Daten laden ----
 async function load(){
   try{
-    const r=await fetch('data/launches.json?t='+Date.now(),{cache:'no-store'});
+    const r=await fetch('data/launches.json',{cache:'no-store'});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const j=await r.json();
     LAUNCHES=Array.isArray(j)?j:(j.launches||[]);
-    if(j.updated)$('#updated').textContent=new Date(j.updated).toLocaleString('de-DE');
+    const u=$('#updated');if(u&&j.updated)u.textContent=j.updated.replace('T',' ').replace('Z',' UTC');
   }catch(e){
     console.error(e);
-    if(window.LAUNCHES_FALLBACK)LAUNCHES=window.LAUNCHES_FALLBACK;
-    else{$('#list').innerHTML='<div class="empty">Daten konnten nicht geladen werden: '+esc(e.message)+'</div>';return}
+    const fb=await fetch('data/launches.js',{cache:'no-store'}).then(r=>r.ok?r.text():'');
+    if(fb){try{LAUNCHES=eval(fb.replace(/^window\.LAUNCHES\s*=\s*/,'[')+';]');}catch(e2){LAUNCHES=[]}}
   }
   renderAll();
 }

@@ -28,10 +28,11 @@
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6V3zM14 3v5h5M9 13h7M9 17h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
   <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 3c-3.5 2.5-6 6.5-6 11v7h12v-7c0-4.5-2.5-8.5-6-11z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="11" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 14l-3 3v3l3-1M18 14l3 3v3l-3-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 21h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
 </svg>
 
 <header class="appbar">
-  <div class="brand"><img src="icon.svg" alt="" width="26" height="26"><h1 id="title">Nächste Starts</h1></div>
+  <div class="brand"><svg class="ic brand-ic" aria-hidden="true"><use href="#i-rocket"/></svg><h1 id="title">Nächste Starts</h1></div>
   <div class="menu-wrap">
     <button id="menuBtn" class="icon-btn" aria-label="Menü" aria-haspopup="true"><svg class="ic"><use href="#i-dots"/></svg></button>
     <div id="menu" class="menu" hidden>
@@ -57,6 +58,7 @@
       <div class="filters">
         <select id="fCompany" aria-label="Firma"></select>
         <select id="fRocket" aria-label="Rakete"></select>
+        <select id="fPad" aria-label="Startplatz"></select>
         <select id="fCountry" aria-label="Land"></select>
         <select id="fType" aria-label="Zweck"></select>
       </div>
@@ -78,6 +80,7 @@
       <div class="filters">
         <select id="sCompany" aria-label="Firma"></select>
         <select id="sRocket" aria-label="Rakete"></select>
+        <select id="sPad" aria-label="Startplatz"></select>
         <select id="sCountry" aria-label="Land"></select>
         <select id="sType" aria-label="Zweck"></select>
       </div>
