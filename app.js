@@ -3,6 +3,8 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const S=window.SITES||{};
 let LAUNCHES=[];
+let LL2=[];            // Raw-Daten The Space Devs (Launch Library 2)
+let LL2_STATE='idle';  // idle | loading | ok | error
 const state={tz:localStorage.getItem('tz')||'local',theme:localStorage.getItem('theme')||'system',q:'',sq:'',sel:null,
   f:{company:'',rocket:'',pad:'',country:'',type:''},sf:{company:'',rocket:'',pad:'',country:'',type:''}};
 if(state.theme==='auto')state.theme='system';
@@ -25,7 +27,7 @@ $$('[data-theme]').forEach(b=>b.onclick=()=>{state.theme=b.dataset.theme;localSt
 $('#tzBtn').onclick=()=>{state.tz=state.tz==='local'?'UTC':'local';localStorage.setItem('tz',state.tz);$('#tzLabel').textContent=state.tz==='local'?'Lokal':'UTC';renderAll()};
 $('#aboutBtn').onclick=()=>{$('#menu').hidden=true;$('#about').showModal()};
 $('#legalBtn').onclick=()=>{$('#menu').hidden=true;$('#legal').showModal()};
-$('#reloadBtn').onclick=()=>{$('#menu').hidden=true;load()};
+$('#reloadBtn').onclick=()=>{$('#menu').hidden=true;try{localStorage.removeItem(LL2_CACHE_KEY)}catch(e){}load()};
 $('#tzLabel').textContent=state.tz==='local'?'Lokal':'UTC';
 
 // ---- Tabs ----
@@ -57,7 +59,153 @@ function rel(ms){
   const s=Math.floor(ms/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),sec=s%60;
   return (d?d+'d ':'')+String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
 }
-function upcoming(){const now=Date.now()-2*3600e3;return LAUNCHES.filter(l=>new Date(l.utc)>=now).sort((a,b)=>new Date(a.utc)-new Date(b.utc))}
+function fmtDiff(min){
+  const a=Math.abs(min);
+  if(a<60)return a+' Min.';
+  const h=Math.floor(a/60),m=a%60;
+  return h+' Std.'+(m?' '+m+' Min.':'');
+}
+
+// ---- The Space Devs (Launch Library 2) ----
+const LL2_URL='https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=50&mode=normal&hide_recent_previous=true';
+const LL2_CACHE_KEY='ll2cache.v1';
+const LL2_TTL=30*60*1000; // 30 Min, Free-Tier ist stark rate-limitiert
+
+async function loadLL2(){
+  LL2_STATE='loading';
+  try{
+    const raw=localStorage.getItem(LL2_CACHE_KEY);
+    if(raw){
+      const c=JSON.parse(raw);
+      if(c&&Date.now()-c.t<LL2_TTL&&Array.isArray(c.results)){LL2=c.results;LL2_STATE='ok';return}
+    }
+  }catch(e){}
+  try{
+    const r=await fetch(LL2_URL,{headers:{'Accept':'application/json'}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    LL2=(j.results||[]).map(x=>({
+      id:x.id,
+      name:x.name||'',
+      net:x.net,
+      status:(x.status&&x.status.abbrev)||'',
+      statusName:(x.status&&x.status.name)||'',
+      rocket:(x.rocket&&x.rocket.configuration&&(x.rocket.configuration.full_name||x.rocket.configuration.name))||'',
+      rocketShort:(x.rocket&&x.rocket.configuration&&x.rocket.configuration.name)||'',
+      provider:(x.launch_service_provider&&x.launch_service_provider.name)||'',
+      mission:(x.mission&&x.mission.name)||'',
+      missionType:(x.mission&&x.mission.type)||'',
+      padName:(x.pad&&x.pad.name)||'',
+      location:(x.pad&&x.pad.location&&x.pad.location.name)||'',
+      vids:(x.vidURLs||[]).map(v=>({url:v.url,title:v.title||'',priority:v.priority||0,live:!!v.live}))
+    }));
+    LL2_STATE='ok';
+    try{localStorage.setItem(LL2_CACHE_KEY,JSON.stringify({t:Date.now(),results:LL2}))}catch(e){}
+  }catch(e){
+    console.warn('Space Devs API nicht verf\u00fcgbar:',e);
+    // abgelaufenen Cache besser als nichts verwenden
+    try{
+      const raw=localStorage.getItem(LL2_CACHE_KEY);
+      if(raw){const c=JSON.parse(raw);if(c&&Array.isArray(c.results)){LL2=c.results;LL2_STATE='ok';return}}
+    }catch(e2){}
+    LL2=[];LL2_STATE='error';
+  }
+}
+
+// Raketen-Namen normalisieren, um Wikipedia- und LL2-Bezeichnungen zu vergleichen
+function rocketKey(s){
+  s=String(s||'').toLowerCase();
+  if(/falcon\s*heavy/.test(s))return 'falconheavy';
+  if(/falcon\s*9/.test(s))return 'falcon9';
+  if(/starship/.test(s))return 'starship';
+  if(/electron/.test(s))return 'electron';
+  if(/neutron/.test(s))return 'neutron';
+  if(/vulcan/.test(s))return 'vulcan';
+  if(/atlas/.test(s))return 'atlas';
+  if(/new\s*glenn/.test(s))return 'newglenn';
+  if(/ariane\s*6/.test(s))return 'ariane6';
+  if(/vega/.test(s))return 'vega';
+  if(/soyuz|sojus/.test(s))return 'soyuz';
+  if(/angara/.test(s))return 'angara';
+  if(/proton/.test(s))return 'proton';
+  if(/pslv/.test(s))return 'pslv';
+  if(/gslv/.test(s))return 'gslv';
+  if(/lvm\s*3/.test(s))return 'lvm3';
+  if(/h3|h-iii/.test(s))return 'h3';
+  const cz=s.match(/(?:cz|long\s*march|langer\s*marsch)[\s-]*(\d+[a-z]?)/);
+  if(cz)return 'cz'+cz[1];
+  const zq=s.match(/zhuque[\s-]*(\d+[a-z]?)/);
+  if(zq)return 'zhuque'+zq[1];
+  return s.replace(/[^a-z0-9]/g,'').slice(0,14);
+}
+const MATCH_WINDOW=12*3600e3;
+function findLL2(l){
+  if(!LL2.length)return null;
+  const t=new Date(l.utc).getTime(),k=rocketKey(l.rocket);
+  let best=null,bd=Infinity;
+  for(const x of LL2){
+    if(rocketKey(x.rocket)!==k&&rocketKey(x.rocketShort)!==k)continue;
+    const d=Math.abs(new Date(x.net).getTime()-t);
+    if(d<MATCH_WINDOW&&d<bd){best=x;bd=d}
+  }
+  return best;
+}
+function bestVid(x){
+  if(!x||!x.vids||!x.vids.length)return null;
+  const yt=u=>/youtube\.com|youtu\.be/i.test(u);
+  const sorted=[...x.vids].sort((a,b)=>(yt(b.url)-yt(a.url))||(b.priority-a.priority));
+  return sorted[0];
+}
+function streamLinks(l,x){
+  const out=[];
+  const v=bestVid(x);
+  if(v)out.push({url:v.url,label:(/youtube\.com|youtu\.be/i.test(v.url)?'Livestream (YouTube)':'Livestream'),live:v.live});
+  const q=encodeURIComponent(((x&&x.name)||(l.rocket+' '+l.payload))+' launch live');
+  out.push({url:'https://www.youtube.com/results?search_query='+q+'&sp=EgJAAQ%253D%253D',label:v?'Weitere Streams auf YouTube':'Livestream auf YouTube suchen',live:false,search:true});
+  return out;
+}
+// Vergleich Wikipedia <-> LL2 fuer einen Eintrag
+function compare(l){
+  if(LL2_STATE!=='ok')return null;
+  const x=findLL2(l);
+  if(!x)return {kind:'missing',x:null};
+  const diff=Math.round((new Date(x.net).getTime()-new Date(l.utc).getTime())/60000);
+  const tol=l.approx?180:10;
+  return {kind:Math.abs(diff)<=tol?'ok':'diff',x,diff};
+}
+function badge(c){
+  if(!c)return '';
+  if(c.kind==='ok')return '<span class="badge ok" title="Wikipedia und The Space Devs stimmen \u00fcberein">\u2713 Quellen gleich</span>';
+  if(c.kind==='diff')return '<span class="badge hot" title="Wikipedia und The Space Devs weichen ab">\u0394 '+(c.diff>0?'+':'\u2212')+esc(fmtDiff(c.diff))+'</span>';
+  return '<span class="badge" title="Kein passender Eintrag bei The Space Devs">nur Wikipedia</span>';
+}
+
+// ---- Gemergte Startliste (Wikipedia + Space Devs) ----
+function merged(){
+  const base=LAUNCHES.map(l=>({...l,src:'wiki'}));
+  if(LL2_STATE!=='ok')return base;
+  const used=new Set();
+  for(const l of base){const x=findLL2(l);if(x)used.add(x.id)}
+  const extra=[];
+  for(const x of LL2){
+    if(used.has(x.id))continue;
+    const loc=(x.location||'').toLowerCase()+' '+(x.padName||'').toLowerCase();
+    let siteId=null;
+    for(const [id,s] of Object.entries(S)){
+      const n=(s.name||'').toLowerCase().split(/[,(]/)[0].trim();
+      if(n&&n.length>3&&loc.includes(n)){siteId=id;break}
+    }
+    extra.push({
+      utc:x.net,approx:/TBD|TBC/i.test(x.status),
+      rocket:x.rocketShort||x.rocket||'Unbekannt',
+      pad:x.padName||'',site:siteId,
+      payload:x.mission||x.name.split('|').pop().trim()||'Nutzlast noch unbekannt',
+      detail:'',type:x.missionType||'',src:'ll2',ll2:x
+    });
+  }
+  return base.concat(extra);
+}
+function upcoming(){const now=Date.now()-2*3600e3;return merged().filter(l=>new Date(l.utc)>=now).sort((a,b)=>new Date(a.utc)-new Date(b.utc))}
 
 const COMPANIES=[
   [/Falcon|Starship|Dragon/i,'SpaceX'],[/Electron|Neutron/i,'Rocket Lab'],[/Vulcan|Atlas|Delta/i,'ULA'],
@@ -122,25 +270,47 @@ function render(){
     const day=fmtDay(new Date(l.utc));
     if(day!==last){html+=`<div class="day">${day}</div>`;last=day}
     const s=site(l);
+    const c=l.src==='ll2'?null:compare(l);
+    const x=l.src==='ll2'?l.ll2:(c&&c.x);
+    const links=streamLinks(l,x);
+    const main=links[0];
+    const hasVid=!!bestVid(x);
+    const liveNow=!!(main&&main.live);
+    const badges=l.src==='ll2'
+      ?'<span class="badge" title="Nur bei The Space Devs gelistet">nur Space Devs</span>'
+      :badge(c);
     html+=`<details class="card"><summary>
       <div class="cc">${esc(s.code||'--')}</div>
       <div class="grow"><div class="t1">${esc(l.rocket)}</div><div class="t2">${esc(l.payload)} \u00b7 ${esc(s.short||s.name)}</div></div>
       <div class="time">${fmtTime(l)}<small>${fmtShort(l)}</small></div>
+      ${hasVid?`<a class="live${liveNow?' now':''}" href="${esc(main.url)}" target="_blank" rel="noopener" title="${esc(main.label)}" aria-label="${esc(main.label)}" onclick="event.stopPropagation()">\u25b6</a>`:''}
       <div class="chev">\u203a</div>
     </summary>
-    <div class="body"><dl>
+    <div class="body">
+      <div class="badges">${badges}${x&&x.statusName?`<span class="badge" title="Status laut The Space Devs">${esc(x.statusName)}</span>`:''}</div>
+      <dl>
       <dt>Rakete</dt><dd>${esc(l.rocket)} ${esc(company(l))}</dd>
       <dt>Nutzlast</dt><dd>${esc(l.payload)}</dd>
       ${l.detail?`<dt>Details</dt><dd>${esc(l.detail)}</dd>`:''}
       ${l.type?`<dt>Zweck</dt><dd>${esc(l.type)}</dd>`:''}
       <dt>Startplatz</dt><dd>${esc(s.name)}${l.pad?` \u00b7 ${esc(l.pad)}`:''}</dd>
       <dt>Land</dt><dd>${esc(s.country)}</dd>
-      <dt>UTC</dt><dd>${new Date(l.utc).toISOString().replace('T',' ').slice(0,16)}${l.approx?' (ca.)':''}</dd>
+      <dt>${l.src==='ll2'?'UTC':'UTC (Wikipedia)'}</dt><dd>${new Date(l.utc).toISOString().replace('T',' ').slice(0,16)}${l.approx?' (ca.)':''}</dd>
+      ${l.src!=='ll2'&&x?`<dt>UTC (Space Devs)</dt><dd>${new Date(x.net).toISOString().replace('T',' ').slice(0,16)}${c&&c.kind==='diff'?` <b class="diff">(${c.diff>0?'+':'\u2212'}${esc(fmtDiff(c.diff))})</b>`:''}</dd>`:''}
       ${s.lat!=null?`<dt>Karte</dt><dd><a href="https://www.openstreetmap.org/?mlat=${s.lat}&mlon=${s.lon}#map=9/${s.lat}/${s.lon}" target="_blank" rel="noopener">Auf Karte</a> <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener">Wikipedia</a></dd>`:''}
-    </dl></div></details>`;
+    </dl>
+    <div class="streams">${links.map(k=>`<a class="btn${k.search?' ghost':''}" href="${esc(k.url)}" target="_blank" rel="noopener">${k.live?'\ud83d\udd34 ':'\u25b6 '}${esc(k.label)}</a>`).join('')}</div>
+    </div></details>`;
   }
   $('#list').innerHTML=html||'<div class="empty">Keine Starts gefunden.</div>';
   tick();
+  srcInfo();
+}
+function srcInfo(){
+  const el=$('#srcinfo');if(!el)return;
+  const m={ok:'Quellen: Wikipedia + The Space Devs',loading:'Lade The Space Devs \u2026',error:'The Space Devs nicht erreichbar \u2013 nur Wikipedia',idle:''};
+  el.textContent=m[LL2_STATE]||'';
+  el.classList.toggle('warn',LL2_STATE==='error');
 }
 function tick(){
   const n=upcoming().find(l=>new Date(l.utc)>Date.now());
@@ -230,7 +400,7 @@ function renderAll(){
 }
 
 // ---- Daten laden ----
-async function load(){
+async function loadWiki(){
   try{
     const r=await fetch('data/launches.json',{cache:'no-store'});
     if(!r.ok)throw new Error('HTTP '+r.status);
@@ -242,6 +412,13 @@ async function load(){
     const fb=await fetch('data/launches.js',{cache:'no-store'}).then(r=>r.ok?r.text():'');
     if(fb){try{LAUNCHES=eval(fb.replace(/^window\.LAUNCHES\s*=\s*/,'[')+';]');}catch(e2){LAUNCHES=[]}}
   }
+}
+async function load(){
+  // Wikipedia-Daten zuerst anzeigen, Space Devs danach nachladen und neu rendern
+  LL2_STATE='loading';
+  await loadWiki();
+  renderAll();
+  await loadLL2();
   renderAll();
 }
 applyTheme();load();
