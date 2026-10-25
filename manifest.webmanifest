@@ -1,6 +1,6 @@
 {
-  "name": "Orbital Launches",
-  "short_name": "Launches",
+  "name": "LaunchHub",
+  "short_name": "LaunchHub",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0b1020",
