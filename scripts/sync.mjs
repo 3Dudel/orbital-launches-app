@@ -3,11 +3,11 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 const API = 'https://de.wikipedia.org/w/api.php?action=parse&page=Liste_geplanter_orbitaler_Raketenstarts&prop=text&format=json&formatversion=2&redirects=1';
-const UA = 'orbital-launches-app/1.0 (https://github.com/3Dudel/orbital-launches-app)';
+const UA = 'LaunchHub/1.0 (https://github.com/3Dudel/orbital-launches-app)';
 
 const sitesSrc = readFileSync('data/sites.js', 'utf8');
 const aliasBlock = sitesSrc.slice(sitesSrc.indexOf('window.SITE_ALIAS'));
-const ALIAS = [...aliasBlock.matchAll(/\[\/(.+?)\/i,\s*"(\w+)"\]/g)].map(m => [new RegExp(m[1], 'i'), m[2]]);
+const ALIAS = [...aliasBlock.matchAll(/\/(.+?)\/i,\s*"(\w+)"\]/g)].map(m => [new RegExp(m[1], 'i'), m[2]]);
 
 const MONTHS = { 'Januar':1,'Februar':2,'März':3,'April':4,'Mai':5,'Juni':6,'Juli':7,'August':8,'September':9,'Oktober':10,'November':11,'Dezember':12 };
 
@@ -63,11 +63,15 @@ for (const row of rows) {
 
   const hh = +tm[2], mm = +tm[3];
   let y = year;
-  // Jahreswechsel: Monat deutlich kleiner als aktueller -> naechstes Jahr
-  if (curDate.mo < now.getUTCMonth() + 1 - 6) y = now.getUTCFullYear() + 1;
   const off = berlinOffset(y, curDate.mo, curDate.d, hh);
-  const utc = new Date(Date.UTC(y, curDate.mo - 1, curDate.d, hh - off, mm));
+  let utc = new Date(Date.UTC(y, curDate.mo - 1, curDate.d, hh - off, mm));
   if (isNaN(utc)) continue;
+  // Jahreswechsel: Wenn das resultierende UTC-Datum mehr als 90 Tage in der Vergangenheit liegt, +1 Jahr.
+  if (utc.getTime() < Date.now() - 90 * 24 * 3600e3) {
+    y = now.getUTCFullYear() + 1;
+    utc = new Date(Date.UTC(y, curDate.mo - 1, curDate.d, hh - off, mm));
+    if (isNaN(utc)) continue;
+  }
 
   // Felder heuristisch: Zeit/Datum-Zellen herausfiltern
   const rest = texts.filter(t => !/^(ca\.\s*)?\d{1,2}:\d{2}/.test(t) && !/^\d{1,2}\.\s*[A-ZÄÖÜ][a-zäöü]+/.test(t));
