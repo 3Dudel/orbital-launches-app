@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Orbital Launches</title>
+<title>LaunchHub</title>
 <meta name="theme-color" content="#f3f1ec">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
@@ -32,7 +32,7 @@
 </svg>
 
 <header class="appbar">
-  <div class="brand"><svg class="ic brand-ic" aria-hidden="true"><use href="#i-rocket"/></svg><h1 id="title">Nächste Starts</h1></div>
+  <div class="brand"><svg class="ic brand-ic" aria-hidden="true"><use href="#i-rocket"/></svg><div class="brand-stack"><h1 class="brand-name">LaunchHub</h1><span id="title" class="brand-sub">Nächste Starts</span></div></div>
   <div class="menu-wrap">
     <button id="menuBtn" class="icon-btn" aria-label="Menü" aria-haspopup="true"><svg class="ic"><use href="#i-dots"/></svg></button>
     <div id="menu" class="menu" hidden>
@@ -98,7 +98,7 @@
 </nav>
 
 <dialog id="about">
-  <h2>Orbital Launches</h2>
+  <h2>LaunchHub</h2>
   <p>Zeigt geplante orbitale Raketenstarts aus zwei Quellen: der <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener">Wikipedia-Liste</a> (stündlich automatisch synchronisiert) und der <a href="https://thespacedevs.com/llapi" target="_blank" rel="noopener">Launch Library 2 von The Space Devs</a> (beim Öffnen der Seite abgerufen, 30 Minuten zwischengespeichert).</p>
   <p>Pro Start wird verglichen, ob beide Quellen übereinstimmen (<b>✓ Quellen gleich</b>) oder die Startzeiten abweichen (<b>Δ</b>). Starts, die nur in einer Quelle stehen, sind entsprechend markiert. Der ▶-Button öffnet den Livestream (meist YouTube), sofern The Space Devs einen hinterlegt hat. Sonst gibt es eine YouTube-Suche zum Start.</p>
   <p>Termine sind vorläufig und können sich jederzeit ändern. Kartendaten: © OpenStreetMap-Mitwirkende.</p>
@@ -115,7 +115,7 @@
   <h3>Hinweis zum Angebot</h3>
   <p>Private, nicht kommerzielle Website ohne Werbung. Die Starttermine stammen aus der <a href="https://de.wikipedia.org/wiki/Liste_geplanter_orbitaler_Raketenstarts" target="_blank" rel="noopener">Wikipedia-Liste geplanter orbitaler Raketenstarts</a> (Lizenz CC BY-SA 4.0) und werden automatisch übernommen. Zusätzlich werden Daten der <a href="https://thespacedevs.com/llapi" target="_blank" rel="noopener">Launch Library 2 (The Space Devs)</a> zum Vergleich und für Livestream-Links verwendet. Alle Angaben ohne Gewähr, Termine sind vorläufig.</p>
   <h3>Datenschutz</h3>
-  <p>Diese Seite speichert keine personenbezogenen Daten auf einem Server. Lokal im Browser werden nur deine Einstellungen (Darstellung, Zeitzone) sowie ein Zwischenspeicher der Startdaten abgelegt. Beim Öffnen der Seite ruft dein Browser Daten von ll.thespacedevs.com ab; beim Anzeigen der Karte werden Kartenkacheln von OpenStreetMap und die Kartenbibliothek von unpkg.com geladen. Dabei wird deine IP-Adresse an diese Anbieter übermittelt. Livestream-Links führen auf externe Seiten (meist YouTube); erst beim Klick darauf werden Daten an den jeweiligen Anbieter übertragen. Gehostet wird die Seite bei GitHub Pages (GitHub Inc.), wo Server-Logs anfallen können.</p>
+  <p>Diese Seite speichert keine personenbezogenen Daten auf einem Server. Lokal im Browser werden nur deine Einstellungen (Darstellung, Zeitzone) sowie ein Zwischenspeicher der Startdaten abgelegt. Beim Öffnen der Seite ruft dein Browser Daten von ll.thespacedevs.com ab; beim Anzeigen der Karte werden Kartenkacheln von OpenStreetMap und die Kartenbibliothek von unpkg.com geladen. Bilder zu den Starts werden von den Servern von The Space Devs bzw. deren Cloud-Speicher geladen. Dabei wird deine IP-Adresse an diese Anbieter übermittelt. Livestream-Links führen auf externe Seiten (meist YouTube); erst beim Klick darauf werden Daten an den jeweiligen Anbieter übertragen. Gehostet wird die Seite bei GitHub Pages (GitHub Inc.), wo Server-Logs anfallen können.</p>
   <h3>Haftung für Inhalte und Links</h3>
   <p>Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte wird keine Haftung übernommen. Für Inhalte externer, verlinkter Seiten sind ausschließlich deren Betreiber verantwortlich.</p>
   <form method="dialog"><button class="primary">Schließen</button></form>
